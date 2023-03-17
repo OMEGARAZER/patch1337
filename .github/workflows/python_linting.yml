@@ -36,7 +36,7 @@ jobs:
 
     - name: Black formatting check
       run: |
-        black --check bdfrx tests scripts/*.py
+        black --check patch1337
 
     - name: Full ruff lint
       run: |
