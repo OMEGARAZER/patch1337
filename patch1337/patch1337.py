@@ -82,6 +82,23 @@ def check_patch(patch_file: str) -> bool:
         return True
 
 
+def backup_file(target: str) -> bool:
+    """Backup original target file."""
+    overwrite_backup = True
+    backup_file = target + ".BAK"
+    if Path(backup_file).exists():
+        overwrite_backup = False
+        overwrite_check = input("Backup file exists, would you like to overwrite? (y/n/X): ")
+        if overwrite_check.lower() == "y":
+            overwrite_backup = True
+        if not overwrite_backup and overwrite_check.lower() != "n":
+            return False
+    if overwrite_backup:
+        shutil.copy(Path(target), Path(backup_file))
+        logger.info("Created backup of {}", Path(target).name)
+    return True
+
+
 def patcher(patch_file: str, target: str, offset: str) -> None:
     """Patch file."""
     errors = False
@@ -90,19 +107,8 @@ def patcher(patch_file: str, target: str, offset: str) -> None:
         return
     if not check_patch(patch_file):
         return
-    backup = target + ".BAK"
-    if Path(backup).exists():
-        overwrite = False
-        overwrite_check = input("Backup file exists, would you like to overwrite? (y/n/X): ")
-        if overwrite_check.lower() == "y":
-            overwrite = True
-        if not overwrite and overwrite_check.lower() != "n":
-            return
-    else:
-        overwrite = True
-    if overwrite:
-        shutil.copy(Path(target), Path(backup))
-        logger.info("Created backup of {}", Path(target).name)
+    if not backup_file(target):
+        return
     with Path(patch_file).open() as patch_file, Path(target).open(mode="r+b", buffering=0) as unpatched_file:
         patch_lines = patch_file.readlines()
         patch_target = str(patch_lines[0])[1:].strip().lower()
