@@ -73,6 +73,7 @@ python_version = "3.9"
 [tool.ruff]
 exclude = []
 flake8-annotations = {"suppress-dummy-args" = true}
+mccabe = {max-complexity = 15}
 ignore = ["D203", "D212", "INP", "PLE1205"]
 line-length = 120
 select = ["ALL"]

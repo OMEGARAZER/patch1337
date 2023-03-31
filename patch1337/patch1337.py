@@ -4,12 +4,13 @@
 import binascii
 import shutil
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import click
 from loguru import logger
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 @click.command()
@@ -87,12 +88,15 @@ def backup_file(target: str) -> bool:
     overwrite_backup = True
     backup_file = target + ".BAK"
     if Path(backup_file).exists():
-        overwrite_backup = False
-        overwrite_check = input("Backup file exists, would you like to overwrite? (y/n/X): ")
-        if overwrite_check.lower() == "y":
-            overwrite_backup = True
-        if not overwrite_backup and overwrite_check.lower() != "n":
-            return False
+        target_mod = Path(target).stat().st_mtime
+        backup_mod = Path(backup_file).stat().st_mtime
+        if backup_mod > (target_mod - timedelta(days=7).total_seconds()):
+            overwrite_backup = False
+            overwrite_check = input("Backup file exists, would you like to overwrite? (y/n/X): ")
+            if overwrite_check.lower() == "y":
+                overwrite_backup = True
+            if not overwrite_backup and overwrite_check.lower() != "n":
+                return False
     if overwrite_backup:
         shutil.copy(Path(target), Path(backup_file))
         logger.info("Created backup of {}", Path(target).name)
@@ -161,6 +165,9 @@ def patcher(patch_file: str, target: str, offset: str) -> None:
                             patch[1],
                             patched_read,
                         )
+                        if Path(backup_file).exists():
+                            shutil.copy(Path(target + ".BAK"), Path(target))
+                            logger.info("Replaced mispatched file with the backup.")
                         break
         logger.info("Patching complete on {}", target_filename)
 
